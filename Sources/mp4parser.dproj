@@ -3,7 +3,7 @@
         <ProjectGuid>{35713BC4-3825-4DD8-A80E-DD6ACE5A77A6}</ProjectGuid>
         <ProjectVersion>15.1</ProjectVersion>
         <FrameworkType>VCL</FrameworkType>
-        <MainSource>mp4.dpr</MainSource>
+        <MainSource>mp4parser.dpr</MainSource>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Debug</Config>
         <Platform Condition="'$(Platform)'==''">Win32</Platform>
@@ -54,7 +54,6 @@
         <DCC_K>false</DCC_K>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
-        <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <DCC_UsePackage>DataSnapIndy10ServerTransport;madBasic_;FireDACASADriver;FireDACSqliteDriver;bindcompfmx;DBXSqliteDriver;vcldbx;FireDACPgDriver;FireDACODBCDriver;fmx;rtl;dbrtl;DbxClientDriver;IndySystem;FireDACCommon;bindcomp;inetdb;inetdbbde;DBXInterBaseDriver;DataSnapClient;DataSnapCommon;DBXOdbcDriver;DataSnapServer;vclFireDAC;madDisAsm_;DataSnapProviderClient;xmlrtl;svnui;DBXSybaseASEDriver;DbxCommonDriver;vclimg;IndyProtocols;DBXMySQLDriver;dbxcds;DatasnapConnectorsFreePascal;FireDACCommonDriver;MetropolisUILiveTile;vclactnband;soaprtl;vcldb;bindengine;bindcompdbx;vcldsnap;bindcompvcl;vclie;fmxFireDAC;FireDACADSDriver;vcltouch;madExcept_;DBXDb2Driver;DBXOracleDriver;CustomIPTransport;PngComponents;vclribbon;VclSmp;FireDACMSSQLDriver;FireDAC;dsnap;IndyIPServer;fmxase;vcl;IndyCore;FireDACDataSnapDriver;VCLRESTComponents;IndyIPCommon;CloudService;DBXMSSQLDriver;dsnapcon;FireDACIBDriver;DBXFirebirdDriver;inet;DBXInformixDriver;fmxobj;FireDACDBXDriver;DataSnapConnectors;FireDACMySQLDriver;vclx;inetdbxpress;svn;DBXSybaseASADriver;FireDACOracleDriver;fmxdae;FireDACDb2Driver;RESTComponents;bdertl;FireDACMSAccDriver;adortl;dbexpress;IndyIPClient;$(DCC_UsePackage)</DCC_UsePackage>
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
@@ -90,7 +89,6 @@
         <DCCReference Include="Classes\mp4Atoms.pas"/>
         <DCCReference Include="Forms\Unit3.pas">
             <Form>Form3</Form>
-            <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="Classes\mp4Container.pas"/>
         <DCCReference Include="Classes\mp4AtomFactory.pas"/>
@@ -162,7 +160,7 @@
                     <VersionInfoKeys Name="theme"/>
                 </VersionInfoKeys>
                 <Source>
-                    <Source Name="MainSource">mp4.dpr</Source>
+                    <Source Name="MainSource">mp4parser.dpr</Source>
                 </Source>
                 <Excluded_Packages>
                     <Excluded_Packages Name="$(BDSBIN)\dcloffice2k190.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>

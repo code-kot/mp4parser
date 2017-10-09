@@ -1,4 +1,4 @@
-program mp4;
+program mp4parser;
 
 uses
   Vcl.Forms,
