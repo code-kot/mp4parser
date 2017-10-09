@@ -36,6 +36,7 @@ type
     procedure ALoadChildAtomsExecute(Sender: TObject);
   private
     { Private declarations }
+    FTreeViewFS: TFormatSettings;
     FFileName: string;
     FAllAtoms: TObjectList<TCustomAtom>;
     FMP4Container: TMP4Container;
@@ -68,7 +69,7 @@ procedure TForm3.AddAtomInfo(tv: TTreeView; TVRoot: TTreeNode; Atom: TCustomAtom
 var
   TVChild: TTreeNode;
 begin
-  TVChild := tv.Items.AddChildObject(TVRoot, Format('%s (%u)', [Atom.AtomType, Atom.Size]), Atom);
+  TVChild := tv.Items.AddChildObject(TVRoot, Format('%s (%s)', [Atom.AtomType, Format('%.0n', [Atom.Size + 0.0], FTreeViewFS)]), Atom);
 
   mmo1.Lines.Add(StringOfChar(' ', TVRoot.Level) + Format('Atom %s @ %u of size: %u, ends @ %u', [Atom.AtomType, Atom.Position, Atom.Size, Atom.Position + Atom.Size]));
 
@@ -136,7 +137,12 @@ begin
 
   FFileName := flpnFileOpen.Dialog.FileName;
 
-  FMP4Container.LoadFromFile(FFileName);
+  try
+    FMP4Container.LoadFromFile(FFileName);
+  except
+    on E: Exception do
+      ApplicationShowException(E);
+  end;
 
   UpdateUI;
 end;
@@ -146,6 +152,8 @@ begin
   mmo1.Clear;
   FAllAtoms := TObjectList<TCustomAtom>.Create;
   FMP4Container := TMP4Container.Create;
+  FTreeViewFS := TFormatSettings.Create;
+  FTreeViewFS.ThousandSeparator := ' ';
 end;
 
 procedure TForm3.FormDestroy(Sender: TObject);

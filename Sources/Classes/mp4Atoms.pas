@@ -144,6 +144,7 @@ uses
 
 resourcestring
   NO_DATA_TO_READ = 'No data to read!';
+  ATOM_SIZE_IS_WRONG = 'Atom (%s) has wrong size (%d) at position (0x%.8X).';
 
 const
   HEADER_SIZE_32 = 4 + 4;     // 32bit size + type
@@ -314,6 +315,9 @@ begin
   else   // 32bit atom header
   begin
     FSize := AtomSize;
+    if FSize < HEADER_SIZE_32 then
+      raise EReadError.CreateFmt(ATOM_SIZE_IS_WRONG, [FType, FSize, FPosition]);
+
     FDataSize := FSize - HEADER_SIZE_32;
   end;
 

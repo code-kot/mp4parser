@@ -50,6 +50,7 @@ object Form3: TForm3
     Align = alLeft
     Indent = 19
     PopupMenu = pm1
+    ReadOnly = True
     TabOrder = 1
   end
   object mm1: TMainMenu
