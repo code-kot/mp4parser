@@ -74,7 +74,7 @@ object Form3: TForm3
       Category = 'File'
       Caption = '&Open...'
       Dialog.DefaultExt = 'mp4'
-      Dialog.Filter = 'MP4 file|*.mp4'
+      Dialog.Filter = 'MP4 file|*.mp4|3GP file|*.3gp'
       Hint = 'Open|Opens an existing file'
       ImageIndex = 7
       ShortCut = 16463
