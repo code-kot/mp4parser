@@ -27,6 +27,10 @@ type
     mniLoadAtomData: TMenuItem;
     ALoadChildAtoms: TAction;
     mniLoadChildAtoms: TMenuItem;
+    AExportAtom: TAction;
+    AExportAtomData: TAction;
+    mniExportAtomData: TMenuItem;
+    mniExportAtom: TMenuItem;
     procedure mniExitClick(Sender: TObject);
     procedure flpnFileOpenAccept(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -34,6 +38,8 @@ type
     procedure pm1Popup(Sender: TObject);
     procedure ALoadAtomDataExecute(Sender: TObject);
     procedure ALoadChildAtomsExecute(Sender: TObject);
+    procedure AExportAtomDataExecute(Sender: TObject);
+    procedure AExportAtomExecute(Sender: TObject);
   private
     { Private declarations }
     FTreeViewFS: TFormatSettings;
@@ -90,6 +96,30 @@ begin
     AddAtomInfo(tv, TVRoot, ChildAtom);
 end;
 
+procedure TForm3.AExportAtomDataExecute(Sender: TObject);
+begin
+  //TODO: Add some progress visualization
+  with TFileSaveDialog.Create(Self) do
+  try
+    if Execute then
+      FMP4Container.ExportAtomData(tv1.Selected.Data, FileName);
+  finally
+    Free;
+  end;
+end;
+
+procedure TForm3.AExportAtomExecute(Sender: TObject);
+begin
+  //TODO: Add some progress visualization
+  with TFileSaveDialog.Create(Self) do
+  try
+    if Execute then
+      FMP4Container.ExportAtom(tv1.Selected.Data, FileName);
+  finally
+    Free;
+  end;
+end;
+
 procedure TForm3.ALoadAtomDataExecute(Sender: TObject);
 var
   i: Integer;
@@ -118,7 +148,11 @@ begin
   tv1.Items.BeginUpdate;
   try
     for i := 0 to tv1.SelectionCount - 1 do
-      if Assigned(tv1.Selections[i].Data) then
+      if Assigned(tv1.Selections[i].Data)
+        and (TObject(tv1.Selections[i].Data) is TCustomAtom)
+        and TCustomAtom(tv1.Selections[i].Data).CanContainChild
+        and (TCustomAtom(tv1.Selections[i].Data).ChildAtomCollection.Count = 0)
+      then
       begin
         FMP4Container.LoadAtomChild(tv1.Selections[i].Data);
         AddAtomSubInfo(tv1, tv1.Selections[i], tv1.Selections[i].Data);
@@ -206,9 +240,10 @@ begin
       if (PByteArray(Atom.DataStream.Memory)^[i] >= 32)
         and (PByteArray(Atom.DataStream.Memory)^[i] <= 126)
       then
+        // show pritable ASCII char
         Result := Result + Char(PByteArray(Atom.DataStream.Memory)^[i])
       else
-        Result := Result + '.';
+        Result := Result + '.'; // and '.' for unprintable ASCII char
   end;
 end;
 
@@ -221,6 +256,8 @@ procedure TForm3.pm1Popup(Sender: TObject);
 begin
   ALoadAtomData.Enabled := (tv1.Items.Count > 0) and TVItemsWithObjectsSelected(tv1);
   ALoadChildAtoms.Enabled := (tv1.Items.Count > 0) and TVItemsWithChildObjectsSelected(tv1);
+  AExportAtomData.Enabled := (tv1.SelectionCount = 1) and Assigned(tv1.Selected.Data);
+  AExportAtom.Enabled := (tv1.SelectionCount = 1) and Assigned(tv1.Selected.Data);
 end;
 
 function TForm3.TVItemsWithChildObjectsSelected(tv: TTreeView): Boolean;
@@ -228,7 +265,11 @@ var
   i: Integer;
 begin
   for i := 0 to tv.SelectionCount - 1 do
-    if Assigned(tv.Selections[i].Data) and TCustomAtom(tv.Selections[i].Data).CanContainChild then
+    if Assigned(tv.Selections[i].Data)
+      and (TObject(tv.Selections[i].Data) is TCustomAtom)
+      and TCustomAtom(tv.Selections[i].Data).CanContainChild
+      and (TCustomAtom(tv.Selections[i].Data).ChildAtomCollection.Count = 0)
+    then
       Exit(True);
 
   Result := False;

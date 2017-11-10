@@ -90,6 +90,16 @@ object Form3: TForm3
       Caption = 'Load Child Atoms'
       OnExecute = ALoadChildAtomsExecute
     end
+    object AExportAtom: TAction
+      Category = 'Container'
+      Caption = 'Export Atom'
+      OnExecute = AExportAtomExecute
+    end
+    object AExportAtomData: TAction
+      Category = 'Container'
+      Caption = 'Export Atom Data'
+      OnExecute = AExportAtomDataExecute
+    end
   end
   object pm1: TPopupMenu
     OnPopup = pm1Popup
@@ -100,6 +110,12 @@ object Form3: TForm3
     end
     object mniLoadChildAtoms: TMenuItem
       Action = ALoadChildAtoms
+    end
+    object mniExportAtom: TMenuItem
+      Action = AExportAtom
+    end
+    object mniExportAtomData: TMenuItem
+      Action = AExportAtomData
     end
   end
 end

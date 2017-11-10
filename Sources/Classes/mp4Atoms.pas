@@ -30,7 +30,7 @@ type
 //    procedure SetSize(const Value: Int64);
   protected
     FPosition: Int64;
-    FSize: Int64;
+    FSize: Int64;     // Atom size with header
     FType: string;
     FDataPosition: Int64;
     FDataSize: Int64;
@@ -38,6 +38,7 @@ type
     FChildAtomPosition: Int64;
     FChildAtomCollection: TObjectList<TCustomAtom>;
     procedure ReadBigEndianInt(AStream: TStream; Buffer: Pointer; Count: Integer);
+    function WriteBigEndianInt(AStream: TStream; Buffer: Pointer; Count: Integer): Integer;
     procedure CheckStreamDataAvaliable(AStream: TStream; DataSize: Int64);
 
     function GetAvaliableChildTypes: string; virtual;
@@ -63,6 +64,9 @@ type
     procedure LoadData(AStream: TStream);
     procedure LoadChildAtoms(AStream: TStream);
     procedure LoadKnownData(AStream: TStream); virtual;
+
+    procedure CopyData(ADataSourceStream, ADestStream: TStream);
+    procedure SaveAtom(ADataSourceStream, ADestStream: TStream);
 
     function CanContainChild: Boolean; virtual;
     procedure Assign(Source: TPersistent); override;
@@ -253,11 +257,11 @@ procedure TCustomAtom.LoadChildAtoms(AStream: TStream);
 begin
   if (FChildAtomPosition > 0) and CanContainChild then
   begin
+    FChildAtomCollection.Clear;
+
     AStream.Position := FChildAtomPosition;
 
     while AStream.Position < (FPosition + FSize) do
-      if True then
-
       FChildAtomCollection.Add(TAtomFactory.CreateAndLoadAtom(AStream));
   end;
 end;
@@ -315,8 +319,8 @@ begin
   else   // 32bit atom header
   begin
     FSize := AtomSize;
-    if FSize < HEADER_SIZE_32 then
-      raise EReadError.CreateFmt(ATOM_SIZE_IS_WRONG, [FType, FSize, FPosition]);
+    if FSize < HEADER_SIZE_32 then  //TODO: '.' for unprintable ASCII char in FType
+      raise EReadError.CreateFmt(ATOM_SIZE_IS_WRONG, [Trim(FType), FSize, FPosition]);
 
     FDataSize := FSize - HEADER_SIZE_32;
   end;
@@ -352,6 +356,65 @@ class procedure TCustomAtom.RegisterAtomClass(AtomType: string;
   AtomClass: TCustomAtomClass);
 begin
   TAtomFactory.RegisterAtomClass(AtomType, AtomClass);
+end;
+
+procedure TCustomAtom.SaveAtom(ADataSourceStream, ADestStream: TStream);
+var
+  AtomSize32: UInt32;
+  AtomSize64: UInt64;
+  AtomType: TBytes;
+begin
+  AtomType := TEncoding.ASCII.GetBytes(FType);
+  if FDataSize + HEADER_SIZE_32 > $FFFFFFFF then // MaxUInt32
+  begin
+    AtomSize32 := 1;
+    WriteBigEndianInt(ADestStream, @AtomSize32, 4);
+    ADestStream.Write(AtomType, Length(AtomType));
+    AtomSize64 := FDataSize + HEADER_SIZE_32;
+    WriteBigEndianInt(ADestStream, @AtomSize64, 8);
+  end
+  else
+  begin
+    AtomSize32 := FDataSize + HEADER_SIZE_32;
+    WriteBigEndianInt(ADestStream, @AtomSize32, 4);
+    ADestStream.Write(AtomType, Length(AtomType));
+  end;
+
+  CopyData(ADataSourceStream, ADestStream);
+end;
+
+function TCustomAtom.WriteBigEndianInt(AStream: TStream; Buffer: Pointer;
+  Count: Integer): Integer;
+var
+  NextByte: PByte;
+begin
+  Result := 0;
+  NextByte := PByte(Buffer) + Count - 1;
+  while NextByte >= PByte(Buffer) do
+  begin
+    Inc(Result, AStream.Write(NextByte^, 1));
+    Dec(NextByte);
+  end;
+end;
+
+procedure TCustomAtom.CopyData(ADataSourceStream, ADestStream: TStream);
+var
+  DataSourceStream: TStream;
+begin
+  if Assigned(ADataSourceStream) then
+  begin
+    DataSourceStream := ADataSourceStream;
+    DataSourceStream.Position := FDataPosition;
+  end
+  else
+  begin
+    DataSourceStream := FDataStream;
+    DataSourceStream.Position := 0;
+  end;
+
+  CheckStreamDataAvaliable(DataSourceStream, FDataSize);
+
+  ADestStream.CopyFrom(DataSourceStream, FDataSize);
 end;
 
 //procedure TCustomAtom.SetSize(const Value: Int64);

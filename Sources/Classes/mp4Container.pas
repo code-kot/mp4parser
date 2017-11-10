@@ -23,6 +23,8 @@ type
 
     procedure LoadAtomData(Atom: TCustomAtom);
     procedure LoadAtomChild(Atom: TCustomAtom);
+    procedure ExportAtomData(Atom: TCustomAtom; const FileName: string);
+    procedure ExportAtom(Atom: TCustomAtom; const FileName: string);
   end;
 
 implementation
@@ -49,6 +51,30 @@ begin
   FAllAtoms.Free;
 
   inherited Destroy;
+end;
+
+procedure TMP4Container.ExportAtom(Atom: TCustomAtom; const FileName: string);
+var
+  ExportFileStream: TFileStream;
+begin
+  ExportFileStream := TFileStream.Create(FileName, fmCreate or fmShareDenyWrite);
+  try
+    Atom.SaveAtom(FFileStream, ExportFileStream);
+  finally
+    ExportFileStream.Free;
+  end;
+end;
+
+procedure TMP4Container.ExportAtomData(Atom: TCustomAtom; const FileName: string);
+var
+  ExportFileStream: TFileStream;
+begin
+  ExportFileStream := TFileStream.Create(FileName, fmCreate or fmShareDenyWrite);
+  try
+    Atom.CopyData(FFileStream, ExportFileStream);
+  finally
+    ExportFileStream.Free;
+  end;
 end;
 
 procedure TMP4Container.LoadAtomChild(Atom: TCustomAtom);
