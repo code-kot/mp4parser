@@ -99,10 +99,13 @@ end;
 procedure TForm3.AExportAtomDataExecute(Sender: TObject);
 begin
   //TODO: Add some progress visualization
-  with TFileSaveDialog.Create(Self) do
+  with TSaveDialog.Create(Self) do
   try
     if Execute then
+    begin
       FMP4Container.ExportAtomData(tv1.Selected.Data, FileName);
+      MessageDlg('Atom data exported.', mtInformation, [mbOK], 0);
+    end;
   finally
     Free;
   end;
@@ -111,10 +114,13 @@ end;
 procedure TForm3.AExportAtomExecute(Sender: TObject);
 begin
   //TODO: Add some progress visualization
-  with TFileSaveDialog.Create(Self) do
+  with TSaveDialog.Create(Self) do
   try
     if Execute then
+    begin
       FMP4Container.ExportAtom(tv1.Selected.Data, FileName);
+      MessageDlg('Atom exported.', mtInformation, [mbOK], 0);
+    end;
   finally
     Free;
   end;
