@@ -45,9 +45,6 @@ type
 
 implementation
 
-resourcestring
-  ERROR_INVALID_SAMPLE_CHUNK_OFFSET_TABLE = 'Invalid sample chunk offset table.';
-
 { TSampleChunkOffsetTable }
 
 constructor TSampleChunkOffsetTable.Create(AStream: TStream);
@@ -64,9 +61,6 @@ begin
   AStream.Read(Version, 1);
   AStream.Read(Flags[0], 3); // 3 bytes flags
   Count := AStream.ReadBigEndianInt;
-
-  if Count < 0 then
-    raise Exception.Create(ERROR_INVALID_SAMPLE_CHUNK_OFFSET_TABLE);
 
   AStream.CheckStreamDataAvaliable(Count * 4); // total entries count * 4 bytes per entry
 
@@ -91,9 +85,6 @@ begin
   AStream.Read(Version, 1);
   AStream.Read(Flags[0], 3); // 3 bytes flags
   Count := AStream.ReadBigEndianInt;
-
-  if Count < 0 then
-    raise Exception.Create(ERROR_INVALID_SAMPLE_CHUNK_OFFSET_TABLE);
 
   AStream.CheckStreamDataAvaliable(Count * 8); // total entries count * 8 bytes per entry
 
