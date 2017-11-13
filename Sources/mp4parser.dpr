@@ -9,7 +9,9 @@ uses
   mp4Atoms in 'Classes\mp4Atoms.pas',
   Unit3 in 'Forms\Unit3.pas' {Form3},
   mp4Container in 'Classes\mp4Container.pas',
-  mp4AtomFactory in 'Classes\mp4AtomFactory.pas';
+  mp4AtomFactory in 'Classes\mp4AtomFactory.pas',
+  mp4SampleChunkOffsetTable in 'Classes\mp4SampleChunkOffsetTable.pas',
+  mp4StreamHelper in 'Classes\mp4StreamHelper.pas';
 
 {$R *.res}
 

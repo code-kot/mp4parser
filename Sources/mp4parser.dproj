@@ -111,6 +111,8 @@
         </DCCReference>
         <DCCReference Include="Classes\mp4Container.pas"/>
         <DCCReference Include="Classes\mp4AtomFactory.pas"/>
+        <DCCReference Include="Classes\mp4SampleChunkOffsetTable.pas"/>
+        <DCCReference Include="Classes\mp4StreamHelper.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

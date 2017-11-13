@@ -3,7 +3,8 @@ unit mp4Atoms;
 interface
 
 uses
-  System.Classes, SysUtils, System.Generics.Collections;
+  System.Classes, SysUtils, System.Generics.Collections,
+  mp4StreamHelper, mp4SampleChunkOffsetTable;
 
 //const
 //  'ftyp'
@@ -37,9 +38,6 @@ type
     FDataStream: TMemoryStream;
     FChildAtomPosition: Int64;
     FChildAtomCollection: TObjectList<TCustomAtom>;
-    procedure ReadBigEndianInt(AStream: TStream; Buffer: Pointer; Count: Integer);
-    function WriteBigEndianInt(AStream: TStream; Buffer: Pointer; Count: Integer): Integer;
-    procedure CheckStreamDataAvaliable(AStream: TStream; DataSize: Int64);
 
     function GetAvaliableChildTypes: string; virtual;
     function IsChildTypeAvaliable(const ChildType: string): Boolean;
@@ -141,13 +139,48 @@ type
     function CanContainChild: Boolean; override;
   end;
 
+  TminfAtom = class(TCustomAtom)
+  const
+    ATOM_TYPE = 'minf';
+  protected
+    function GetAvaliableChildTypes: string; override;
+  end;
+
+  TstblAtom = class(TCustomAtom)
+  const
+    ATOM_TYPE = 'stbl';
+  protected
+    function GetAvaliableChildTypes: string; override;
+  end;
+
+  TstcoAtom = class(TCustomAtom)
+  const
+    ATOM_TYPE = 'stco';
+  protected
+    function GetAvaliableChildTypes: string; override;
+  public
+    ChunkOffsetTable: TSampleChunkOffsetTable;
+    procedure LoadKnownData(AStream: TStream); override;
+    function CanContainChild: Boolean; override;
+  end;
+
+  Tco64Atom = class(TCustomAtom)
+  const
+    ATOM_TYPE = 'co64';
+  protected
+    function GetAvaliableChildTypes: string; override;
+  public
+    ChunkOffsetTable: TSampleChunkOffsetTable64;
+    procedure LoadKnownData(AStream: TStream); override;
+    function CanContainChild: Boolean; override;
+  end;
+
 implementation
 
 uses
   mp4AtomFactory;
 
 resourcestring
-  NO_DATA_TO_READ = 'No data to read!';
   ATOM_SIZE_IS_WRONG = 'Atom (%s) has wrong size (%d) at position (0x%.8X).';
 
 const
@@ -166,6 +199,10 @@ begin
   TAtomFactory.RegisterAtomClass(TmdiaAtom.ATOM_TYPE, TmdiaAtom);
   TAtomFactory.RegisterAtomClass(TmdhdAtom.ATOM_TYPE, TmdhdAtom);
   TAtomFactory.RegisterAtomClass(ThdlrAtom.ATOM_TYPE, ThdlrAtom);
+  TAtomFactory.RegisterAtomClass(TminfAtom.ATOM_TYPE, TminfAtom);
+  TAtomFactory.RegisterAtomClass(TstblAtom.ATOM_TYPE, TstblAtom);
+  TAtomFactory.RegisterAtomClass(TstcoAtom.ATOM_TYPE, TstcoAtom);
+  TAtomFactory.RegisterAtomClass(Tco64Atom.ATOM_TYPE, Tco64Atom);
 end;
 
 { TCustomAtom }
@@ -197,13 +234,6 @@ end;
 function TCustomAtom.CanContainChild: Boolean;
 begin
   Result := True;
-end;
-
-procedure TCustomAtom.CheckStreamDataAvaliable(AStream: TStream;
-  DataSize: Int64);
-begin
-  if AStream.Size - AStream.Position < DataSize then
-    raise EReadError.Create(NO_DATA_TO_READ);
 end;
 
 constructor TCustomAtom.Create(AStream: TStream);
@@ -271,7 +301,7 @@ begin
   AStream.Position := FDataPosition;
 
   FDataStream.Position := 0;
-  CheckStreamDataAvaliable(AStream, FDataSize);
+  AStream.CheckStreamDataAvaliable(FDataSize);
   FDataStream.CopyFrom(AStream, FDataSize);
 end;
 
@@ -281,13 +311,13 @@ begin
 
   if FDataSize <= HEADER_SIZE_64 then
   begin
-    CheckStreamDataAvaliable(AStream, FDataSize);
+    AStream.CheckStreamDataAvaliable(FDataSize);
 
     FDataStream.CopyFrom(AStream, FDataSize);
   end
   else
   begin
-    CheckStreamDataAvaliable(AStream, HEADER_SIZE_64);
+    AStream.CheckStreamDataAvaliable(HEADER_SIZE_64);
 
     FDataStream.CopyFrom(AStream, HEADER_SIZE_64);
 
@@ -302,8 +332,8 @@ var
 begin
   FPosition := AStream.Position;
 
-  CheckStreamDataAvaliable(AStream, HEADER_SIZE_32);
-  ReadBigEndianInt(AStream, @AtomSize, 4);
+  AStream.CheckStreamDataAvaliable(HEADER_SIZE_32);
+  AtomSize := AStream.ReadBigEndianInt;
 
   SetLength(Buffer, 4);
   AStream.Read(Buffer, 4);
@@ -311,9 +341,9 @@ begin
 
   if AtomSize = 1 then // 64bit atom header
   begin
-    CheckStreamDataAvaliable(AStream, HEADER_SIZE_64 - HEADER_SIZE_32);
+    AStream.CheckStreamDataAvaliable(HEADER_SIZE_64 - HEADER_SIZE_32);
 
-    ReadBigEndianInt(AStream, @FSize, 8);
+    FSize := AStream.ReadBigEndianInt64;
     FDataSize := FSize - HEADER_SIZE_64;
   end
   else   // 32bit atom header
@@ -340,18 +370,6 @@ begin
   // no known data
 end;
 
-procedure TCustomAtom.ReadBigEndianInt(AStream: TStream; Buffer: Pointer; Count: Integer);
-var
-  NextByte: PByte;
-begin
-  NextByte := PByte(Buffer) + Count - 1;
-  while NextByte >= PByte(Buffer) do
-  begin
-    AStream.Read(NextByte^, 1);
-    Dec(NextByte);
-  end;
-end;
-
 class procedure TCustomAtom.RegisterAtomClass(AtomType: string;
   AtomClass: TCustomAtomClass);
 begin
@@ -368,33 +386,19 @@ begin
   if FDataSize + HEADER_SIZE_32 > $FFFFFFFF then // MaxUInt32
   begin
     AtomSize32 := 1;
-    WriteBigEndianInt(ADestStream, @AtomSize32, 4);
+    ADestStream.WriteBigEndianInt(AtomSize32);
     ADestStream.Write(AtomType, Length(AtomType));
     AtomSize64 := FDataSize + HEADER_SIZE_32;
-    WriteBigEndianInt(ADestStream, @AtomSize64, 8);
+    ADestStream.WriteBigEndianInt64(AtomSize64);
   end
   else
   begin
     AtomSize32 := FDataSize + HEADER_SIZE_32;
-    WriteBigEndianInt(ADestStream, @AtomSize32, 4);
+    ADestStream.WriteBigEndianInt(AtomSize32);
     ADestStream.Write(AtomType, Length(AtomType));
   end;
 
   CopyData(ADataSourceStream, ADestStream);
-end;
-
-function TCustomAtom.WriteBigEndianInt(AStream: TStream; Buffer: Pointer;
-  Count: Integer): Integer;
-var
-  NextByte: PByte;
-begin
-  Result := 0;
-  NextByte := PByte(Buffer) + Count - 1;
-  while NextByte >= PByte(Buffer) do
-  begin
-    Inc(Result, AStream.Write(NextByte^, 1));
-    Dec(NextByte);
-  end;
 end;
 
 procedure TCustomAtom.CopyData(ADataSourceStream, ADestStream: TStream);
@@ -412,7 +416,7 @@ begin
     DataSourceStream.Position := 0;
   end;
 
-  CheckStreamDataAvaliable(DataSourceStream, FDataSize);
+  DataSourceStream.CheckStreamDataAvaliable(FDataSize);
 
   ADestStream.CopyFrom(DataSourceStream, FDataSize);
 end;
@@ -479,7 +483,7 @@ end;
 
 function TtrakAtom.GetAvaliableChildTypes: string;
 begin
-  Result := 'tkhd|mdia';
+  Result := 'tkhd|mdia|edts';
 end;
 
 { TmdhdAtom }
@@ -570,6 +574,56 @@ begin
 // The subtype is a 4 letter code identifying the specific handler - for example
 // 'vide' for video, 'soun' for sound, 'alis' for a file alias, and more. The hdlr
 // atom under mdia seems more useful than the descendant of minf.
+end;
+
+{ TminfAtom }
+
+function TminfAtom.GetAvaliableChildTypes: string;
+begin
+  Result := 'gmhd|smhd|stbl|vmhd|dinf';
+end;
+
+{ TstblAtom }
+
+function TstblAtom.GetAvaliableChildTypes: string;
+begin
+  Result := 'co64|ctts|stco|stsc|stsd|stss|stsz|stts';
+end;
+
+{ TstcoAtom }
+
+function TstcoAtom.CanContainChild: Boolean;
+begin
+  Result := False;
+end;
+
+function TstcoAtom.GetAvaliableChildTypes: string;
+begin
+  Result := '';
+end;
+
+procedure TstcoAtom.LoadKnownData(AStream: TStream);
+begin
+  AStream.Position := FDataPosition;
+  ChunkOffsetTable := TSampleChunkOffsetTable.Create(AStream);
+end;
+
+{ Tco64Atom }
+
+function Tco64Atom.CanContainChild: Boolean;
+begin
+  Result := False;
+end;
+
+function Tco64Atom.GetAvaliableChildTypes: string;
+begin
+  Result := '';
+end;
+
+procedure Tco64Atom.LoadKnownData(AStream: TStream);
+begin
+  AStream.Position := FDataPosition;
+  ChunkOffsetTable := TSampleChunkOffsetTable64.Create(AStream);
 end;
 
 initialization
