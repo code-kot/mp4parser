@@ -4,7 +4,7 @@ interface
 
 uses
   System.Classes, SysUtils, System.Generics.Collections,
-  mp4StreamHelper, mp4SampleChunkOffsetTable;
+  mp4StreamHelper, mp4ChunkOffsetTable;
 
 //const
 //  'ftyp'
@@ -159,7 +159,7 @@ type
   protected
     function GetAvaliableChildTypes: string; override;
   public
-    ChunkOffsetTable: TSampleChunkOffsetTable;
+    ChunkOffsetTable: TChunkOffsetTable;
     procedure LoadKnownData(AStream: TStream); override;
     function CanContainChild: Boolean; override;
   end;
@@ -170,7 +170,7 @@ type
   protected
     function GetAvaliableChildTypes: string; override;
   public
-    ChunkOffsetTable: TSampleChunkOffsetTable64;
+    ChunkOffsetTable: TChunkOffsetTable64;
     procedure LoadKnownData(AStream: TStream); override;
     function CanContainChild: Boolean; override;
   end;
@@ -605,7 +605,7 @@ end;
 procedure TstcoAtom.LoadKnownData(AStream: TStream);
 begin
   AStream.Position := FDataPosition;
-  ChunkOffsetTable := TSampleChunkOffsetTable.Create(AStream);
+  ChunkOffsetTable := TChunkOffsetTable.Create(AStream);
 end;
 
 { Tco64Atom }
@@ -623,7 +623,7 @@ end;
 procedure Tco64Atom.LoadKnownData(AStream: TStream);
 begin
   AStream.Position := FDataPosition;
-  ChunkOffsetTable := TSampleChunkOffsetTable64.Create(AStream);
+  ChunkOffsetTable := TChunkOffsetTable64.Create(AStream);
 end;
 
 initialization

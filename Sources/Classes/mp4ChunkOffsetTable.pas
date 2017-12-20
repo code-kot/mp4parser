@@ -1,4 +1,4 @@
-unit mp4SampleChunkOffsetTable;
+unit mp4ChunkOffsetTable;
 
 interface
 
@@ -9,50 +9,50 @@ uses
 type
 // 1 byte    version
 // 3 bytes   flags
-// 4 bytes   total entries in offset table (n)
+// 4 bytes   total entries count (n)
 // 4 bytes   chunk offset 0
 // 4 bytes   chunk offset 1
 //  ..
 //  ..
 // 4 bytes   chunk offset n-1
 
-  TSampleChunkOffsetTable = record
+  TChunkOffsetTable = record   // stco Atom
     Version: Byte;
     Flags: array [0..2] of Byte;
     Count: UInt32;
-    ChunckOffset: array of UInt32;
+    ChunkOffset: array of UInt32;
     procedure LoadFromStream(AStream: TStream);
     constructor Create(AStream: TStream);
   end;
 
 // 1 byte    version
 // 3 bytes   flags
-// 4 bytes   total entries in offset table (n)
+// 4 bytes   total entries count (n)
 // 8 bytes   chunk offset 0
 // 8 bytes   chunk offset 1
 //  ..
 //  ..
 // 8 bytes   chunk offset n-1
 
-  TSampleChunkOffsetTable64 = record
+  TChunkOffsetTable64 = record   // co64 Atom
     Version: Byte;
     Flags: array [0..2] of Byte;
     Count: UInt32;
-    ChunckOffset: array of UInt64;
+    ChunkOffset: array of UInt64;
     procedure LoadFromStream(AStream: TStream);
     constructor Create(AStream: TStream);
   end;
 
 implementation
 
-{ TSampleChunkOffsetTable }
+{ TChunkOffsetTable }
 
-constructor TSampleChunkOffsetTable.Create(AStream: TStream);
+constructor TChunkOffsetTable.Create(AStream: TStream);
 begin
   LoadFromStream(AStream);
 end;
 
-procedure TSampleChunkOffsetTable.LoadFromStream(AStream: TStream);
+procedure TChunkOffsetTable.LoadFromStream(AStream: TStream);
 var
   i: Integer;
 begin
@@ -64,19 +64,19 @@ begin
 
   AStream.CheckStreamDataAvaliable(Count * 4); // total entries count * 4 bytes per entry
 
-  SetLength(ChunckOffset, Count);
+  SetLength(ChunkOffset, Count);
   for i := 0 to Count - 1 do
-    ChunckOffset[i] := AStream.ReadBigEndianInt; // 4 bytes chunk offset
+    ChunkOffset[i] := AStream.ReadBigEndianInt; // 4 bytes chunk offset
 end;
 
-{ TSampleChunkOffsetTable64 }
+{ TChunkOffsetTable64 }
 
-constructor TSampleChunkOffsetTable64.Create(AStream: TStream);
+constructor TChunkOffsetTable64.Create(AStream: TStream);
 begin
   LoadFromStream(AStream);
 end;
 
-procedure TSampleChunkOffsetTable64.LoadFromStream(AStream: TStream);
+procedure TChunkOffsetTable64.LoadFromStream(AStream: TStream);
 var
   i: Integer;
 begin
@@ -88,9 +88,9 @@ begin
 
   AStream.CheckStreamDataAvaliable(Count * 8); // total entries count * 8 bytes per entry
 
-  SetLength(ChunckOffset, Count);
+  SetLength(ChunkOffset, Count);
   for i := 0 to Count - 1 do
-    ChunckOffset[i] := AStream.ReadBigEndianInt64; // 8 bytes chunk offset
+    ChunkOffset[i] := AStream.ReadBigEndianInt64; // 8 bytes chunk offset
 end;
 
 end.

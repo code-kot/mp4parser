@@ -44,7 +44,6 @@ type
     { Private declarations }
     FTreeViewFS: TFormatSettings;
     FFileName: string;
-    FAllAtoms: TObjectList<TCustomAtom>;
     FMP4Container: TMP4Container;
     function GetAtomPreviewHexStr(Atom: TCustomAtom): string;
     function GetAtomPreviewStr(Atom: TCustomAtom): string;
@@ -190,7 +189,6 @@ end;
 procedure TForm3.FormCreate(Sender: TObject);
 begin
   mmo1.Clear;
-  FAllAtoms := TObjectList<TCustomAtom>.Create;
   FMP4Container := TMP4Container.Create;
   FTreeViewFS := TFormatSettings.Create;
   FTreeViewFS.ThousandSeparator := ' ';
@@ -198,8 +196,6 @@ end;
 
 procedure TForm3.FormDestroy(Sender: TObject);
 begin
-  FAllAtoms.Free;
-
   FMP4Container.Free;
 end;
 

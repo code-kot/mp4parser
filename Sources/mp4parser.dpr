@@ -10,8 +10,10 @@ uses
   Unit3 in 'Forms\Unit3.pas' {Form3},
   mp4Container in 'Classes\mp4Container.pas',
   mp4AtomFactory in 'Classes\mp4AtomFactory.pas',
-  mp4SampleChunkOffsetTable in 'Classes\mp4SampleChunkOffsetTable.pas',
-  mp4StreamHelper in 'Classes\mp4StreamHelper.pas';
+  mp4StreamHelper in 'Classes\mp4StreamHelper.pas',
+  mp4ChunkOffsetTable in 'Classes\mp4ChunkOffsetTable.pas',
+  mp4Sample2ChunkMapTable in 'Classes\mp4Sample2ChunkMapTable.pas',
+  mp4SampleSizesTable in 'Classes\mp4SampleSizesTable.pas';
 
 {$R *.res}
 
