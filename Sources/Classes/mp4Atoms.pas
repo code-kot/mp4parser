@@ -4,7 +4,8 @@ interface
 
 uses
   System.Classes, SysUtils, System.Generics.Collections,
-  mp4StreamHelper, mp4ChunkOffsetTable;
+  mp4StreamHelper, mp4ChunkOffsetTable, mp4Sample2ChunkMapTable,
+  mp4SampleSizeTable, mp4HandlerTypeData;
 
 //const
 //  'ftyp'
@@ -24,6 +25,14 @@ uses
 //    'mdat'
 
 type
+  TCustomAtom = class;
+
+  TAtomsList = class(TObjectList<TCustomAtom>)
+  public
+    function GetAtomByName(const AtomName: string): TCustomAtom;
+    function GetAllAtomsByName(const AtomName: string): TList<TCustomAtom>;
+  end;
+
   TCustomAtomClass = class of TCustomAtom;
 
   TCustomAtom = class(TPersistent)
@@ -37,7 +46,7 @@ type
     FDataSize: Int64;
     FDataStream: TMemoryStream;
     FChildAtomPosition: Int64;
-    FChildAtomCollection: TObjectList<TCustomAtom>;
+    FChildAtomCollection: TAtomsList;
 
     function GetAvaliableChildTypes: string; virtual;
     function IsChildTypeAvaliable(const ChildType: string): Boolean;
@@ -55,7 +64,7 @@ type
     property DataSize: Int64 read FDataSize;
     property AtomType: string read FType;
     property DataStream: TMemoryStream read FDataStream;
-    property ChildAtomCollection: TObjectList<TCustomAtom> read FChildAtomCollection;
+    property ChildAtomCollection: TAtomsList read FChildAtomCollection;
     function IsDataLoaded: Boolean;
 
     procedure LoadFromStream(AStream: TStream);
@@ -68,15 +77,21 @@ type
 
     function CanContainChild: Boolean; virtual;
     procedure Assign(Source: TPersistent); override;
+
+    function GetChildAtomByName(const AtomName: string): TCustomAtom;
+    function GetAllChildAtomsByName(const AtomName: string): TList<TCustomAtom>;
   end;
 
-  TftypAtom = class(TCustomAtom)
-  const
-    ATOM_TYPE = 'ftyp';
+  TCustomNoChildAtom = class(TCustomAtom)
   protected
     function GetAvaliableChildTypes: string; override;
   public
     function CanContainChild: Boolean; override;
+  end;
+
+  TftypAtom = class(TCustomNoChildAtom)
+  const
+    ATOM_TYPE = 'ftyp';
   end;
 
   TmoovAtom = class(TCustomAtom)
@@ -86,13 +101,10 @@ type
     function GetAvaliableChildTypes: string; override;
   end;
 
-  TmvhdAtom = class(TCustomAtom)
+  TmvhdAtom = class(TCustomNoChildAtom)
   const
     ATOM_TYPE = 'mvhd';
-  protected
-    function GetAvaliableChildTypes: string; override;
   public
-    function CanContainChild: Boolean; override;
     procedure LoadKnownData(AStream: TStream); override;
   end;
 
@@ -103,13 +115,9 @@ type
     function GetAvaliableChildTypes: string; override;
   end;
 
-  TtkhdAtom = class(TCustomAtom)
+  TtkhdAtom = class(TCustomNoChildAtom)
   const
     ATOM_TYPE = 'tkhd';
-  protected
-    function GetAvaliableChildTypes: string; override;
-  public
-    function CanContainChild: Boolean; override;
   end;
 
   TmdiaAtom = class(TCustomAtom)
@@ -119,24 +127,19 @@ type
     function GetAvaliableChildTypes: string; override;
   end;
 
-  TmdhdAtom = class(TCustomAtom)
+  TmdhdAtom = class(TCustomNoChildAtom)
   const
     ATOM_TYPE = 'mdhd';
-  protected
-    function GetAvaliableChildTypes: string; override;
   public
     procedure LoadKnownData(AStream: TStream); override;
-    function CanContainChild: Boolean; override;
   end;
 
-  ThdlrAtom = class(TCustomAtom)
+  ThdlrAtom = class(TCustomNoChildAtom)
   const
     ATOM_TYPE = 'hdlr';
-  protected
-    function GetAvaliableChildTypes: string; override;
   public
+    HandlerTypeData: THandlerTypeData;
     procedure LoadKnownData(AStream: TStream); override;
-    function CanContainChild: Boolean; override;
   end;
 
   TminfAtom = class(TCustomAtom)
@@ -153,26 +156,54 @@ type
     function GetAvaliableChildTypes: string; override;
   end;
 
-  TstcoAtom = class(TCustomAtom)
+  TstcoAtom = class(TCustomNoChildAtom)
   const
     ATOM_TYPE = 'stco';
-  protected
-    function GetAvaliableChildTypes: string; override;
+  private
+    function GetChunkOffset(Index: Uint32): UInt64; virtual;
+    function GetChunksCount: Uint32; virtual;
   public
     ChunkOffsetTable: TChunkOffsetTable;
     procedure LoadKnownData(AStream: TStream); override;
-    function CanContainChild: Boolean; override;
+    property ChunksCount: Uint32 read GetChunksCount;
+    property ChunkOffset[Index: Uint32]: UInt64 read GetChunkOffset;
   end;
 
-  Tco64Atom = class(TCustomAtom)
+  Tco64Atom = class(TstcoAtom)
   const
     ATOM_TYPE = 'co64';
-  protected
-    function GetAvaliableChildTypes: string; override;
+//  private
+//    function GetChunkOffset(Index: Integer): UInt64; override;
+//    function GetChunksCount: Integer; override;
   public
     ChunkOffsetTable: TChunkOffsetTable64;
     procedure LoadKnownData(AStream: TStream); override;
-    function CanContainChild: Boolean; override;
+  end;
+
+  TstscAtom = class(TCustomNoChildAtom)
+  const
+    ATOM_TYPE = 'stsc';
+  private
+    function GetEntriesCount: Cardinal;
+    function GetTableEntry(Index: Cardinal): TSample2ChunkMapTableEntry;
+  public
+    Sample2ChunkMap: TSample2ChunkMapTable;
+    property EntriesCount: Cardinal read GetEntriesCount;
+    property Entries[Index: Cardinal]: TSample2ChunkMapTableEntry read GetTableEntry;
+    procedure LoadKnownData(AStream: TStream); override;
+  end;
+
+  TstszAtom = class(TCustomNoChildAtom)
+  const
+    ATOM_TYPE = 'stsz';
+  private
+    function GetSamplesCount: Cardinal;
+    function GetSampleSize(Index: Cardinal): UInt32;
+  public
+    SampleSizeTable: TSampleSizeTable;
+    property SamplesCount: Cardinal read GetSamplesCount;
+    property SampleSize[Index: Cardinal]: UInt32 read GetSampleSize;
+    procedure LoadKnownData(AStream: TStream); override;
   end;
 
 implementation
@@ -203,6 +234,8 @@ begin
   TAtomFactory.RegisterAtomClass(TstblAtom.ATOM_TYPE, TstblAtom);
   TAtomFactory.RegisterAtomClass(TstcoAtom.ATOM_TYPE, TstcoAtom);
   TAtomFactory.RegisterAtomClass(Tco64Atom.ATOM_TYPE, Tco64Atom);
+  TAtomFactory.RegisterAtomClass(TstscAtom.ATOM_TYPE, TstscAtom);
+  TAtomFactory.RegisterAtomClass(TstszAtom.ATOM_TYPE, TstszAtom);
 end;
 
 { TCustomAtom }
@@ -212,7 +245,7 @@ begin
   inherited Create;
 
   FDataStream := TMemoryStream.Create;
-  FChildAtomCollection := TObjectList<TCustomAtom>.Create;
+  FChildAtomCollection := TAtomsList.Create;
 end;
 
 procedure TCustomAtom.Assign(Source: TPersistent);
@@ -251,9 +284,20 @@ begin
   inherited Destroy;
 end;
 
+function TCustomAtom.GetAllChildAtomsByName(
+  const AtomName: string): TList<TCustomAtom>;
+begin
+  Result := FChildAtomCollection.GetAllAtomsByName(AtomName);
+end;
+
 function TCustomAtom.GetAvaliableChildTypes: string;
 begin
   Result := ANY_CHILD_TYPE; // any child
+end;
+
+function TCustomAtom.GetChildAtomByName(const AtomName: string): TCustomAtom;
+begin
+  Result := FChildAtomCollection.GetAtomByName(AtomName);
 end;
 
 function TCustomAtom.IsChildTypeAvaliable(const ChildType: string): Boolean;
@@ -441,18 +485,6 @@ end;
 //  end;
 //end;
 
-{ TftypAtom }
-
-function TftypAtom.CanContainChild: Boolean;
-begin
-  Result := False;
-end;
-
-function TftypAtom.GetAvaliableChildTypes: string;
-begin
-  Result := '';
-end;
-
 { TmoovAtom }
 
 function TmoovAtom.GetAvaliableChildTypes: string;
@@ -462,21 +494,9 @@ end;
 
 { TmvhdAtom }
 
-function TmvhdAtom.CanContainChild: Boolean;
-begin
-  Result := False;
-end;
-
-function TmvhdAtom.GetAvaliableChildTypes: string;
-begin
-  Result := '';
-end;
-
 procedure TmvhdAtom.LoadKnownData(AStream: TStream);
 begin
   // ???
-
-
 end;
 
 { TtrakAtom }
@@ -487,16 +507,6 @@ begin
 end;
 
 { TmdhdAtom }
-
-function TmdhdAtom.CanContainChild: Boolean;
-begin
-  Result := False;
-end;
-
-function TmdhdAtom.GetAvaliableChildTypes: string;
-begin
-  Result := '';
-end;
 
 procedure TmdhdAtom.LoadKnownData(AStream: TStream);
 begin
@@ -528,18 +538,6 @@ begin
 // three 5-bit values (each of which is the ASCII value of the letter minus 0x60).
 end;
 
-{ TtkhdAtom }
-
-function TtkhdAtom.CanContainChild: Boolean;
-begin
-  Result := False;
-end;
-
-function TtkhdAtom.GetAvaliableChildTypes: string;
-begin
-  Result := '';
-end;
-
 { TmdiaAtom }
 
 function TmdiaAtom.GetAvaliableChildTypes: string;
@@ -549,31 +547,11 @@ end;
 
 { ThdlrAtom }
 
-function ThdlrAtom.CanContainChild: Boolean;
-begin
-  Result := False;
-end;
-
-function ThdlrAtom.GetAvaliableChildTypes: string;
-begin
-  Result := '';
-end;
-
 procedure ThdlrAtom.LoadKnownData(AStream: TStream);
 begin
-//   version
-//   flags
-//   component_type
-//   subtype
-//   manufacturer
-//   res_flags
-//   res_flags_mask
-//   name
-//
-// The component_type can denote this track is 'dhlr' for data or 'mhlr' for media.
-// The subtype is a 4 letter code identifying the specific handler - for example
-// 'vide' for video, 'soun' for sound, 'alis' for a file alias, and more. The hdlr
-// atom under mdia seems more useful than the descendant of minf.
+  LoadData(AStream); // load DataStream
+  FDataStream.Position := 0;
+  HandlerTypeData := THandlerTypeData.Create(FDataStream, FDataSize);
 end;
 
 { TminfAtom }
@@ -592,38 +570,115 @@ end;
 
 { TstcoAtom }
 
-function TstcoAtom.CanContainChild: Boolean;
+function TstcoAtom.GetChunkOffset(Index: Uint32): UInt64;
 begin
-  Result := False;
+  if (Index < ChunkOffsetTable.Count) then
+    Result := ChunkOffsetTable.ChunkOffset[Index]
+  else
+    raise EArgumentOutOfRangeException.Create('Argument is out of range');
 end;
 
-function TstcoAtom.GetAvaliableChildTypes: string;
+function TstcoAtom.GetChunksCount: Uint32;
 begin
-  Result := '';
+  Result := ChunkOffsetTable.Count;
 end;
 
 procedure TstcoAtom.LoadKnownData(AStream: TStream);
 begin
-  AStream.Position := FDataPosition;
-  ChunkOffsetTable := TChunkOffsetTable.Create(AStream);
+  LoadData(AStream); // load DataStream
+  FDataStream.Position := 0;
+  ChunkOffsetTable := TChunkOffsetTable.Create(FDataStream);
 end;
 
 { Tco64Atom }
 
-function Tco64Atom.CanContainChild: Boolean;
+procedure Tco64Atom.LoadKnownData(AStream: TStream);
+begin
+  LoadData(AStream); // load DataStream
+  FDataStream.Position := 0;
+  ChunkOffsetTable := TChunkOffsetTable64.Create(FDataStream);
+end;
+
+{ TAtomsList }
+
+function TAtomsList.GetAllAtomsByName(const AtomName: string): TList<TCustomAtom>;
+var
+  Atom: TCustomAtom;
+begin
+  Result := TList<TCustomAtom>.Create;
+  try
+    for Atom in Self do
+      if SameText(Atom.AtomType, AtomName) then
+        Result.Add(Atom);
+  except
+    Result.Free;
+    raise;
+  end;
+end;
+
+function TAtomsList.GetAtomByName(const AtomName: string): TCustomAtom;
+begin
+  for Result in Self do
+    if SameText(Result.AtomType, AtomName) then
+      Exit;
+
+  Result := nil;
+end;
+
+{ TstscAtom }
+
+function TstscAtom.GetEntriesCount: Cardinal;
+begin
+  Result := Sample2ChunkMap.Count;
+end;
+
+function TstscAtom.GetTableEntry(Index: Cardinal): TSample2ChunkMapTableEntry;
+begin
+  if (Index < Sample2ChunkMap.Count) then
+    Result := Sample2ChunkMap.Entries[Index]
+  else
+    raise EArgumentOutOfRangeException.Create('Argument is out of range');
+end;
+
+procedure TstscAtom.LoadKnownData(AStream: TStream);
+begin
+  LoadData(AStream); // load DataStream
+  FDataStream.Position := 0;
+  Sample2ChunkMap := TSample2ChunkMapTable.Create(FDataStream);
+end;
+
+{ TCustomNoChildAtom }
+
+function TCustomNoChildAtom.CanContainChild: Boolean;
 begin
   Result := False;
 end;
 
-function Tco64Atom.GetAvaliableChildTypes: string;
+function TCustomNoChildAtom.GetAvaliableChildTypes: string;
 begin
   Result := '';
 end;
 
-procedure Tco64Atom.LoadKnownData(AStream: TStream);
+{ TstszAtom }
+
+function TstszAtom.GetSamplesCount: Cardinal;
 begin
-  AStream.Position := FDataPosition;
-  ChunkOffsetTable := TChunkOffsetTable64.Create(AStream);
+  Result := SampleSizeTable.Count;
+end;
+
+function TstszAtom.GetSampleSize(Index: Cardinal): UInt32;
+begin
+  if Index < SampleSizeTable.Count then
+    Result := SampleSizeTable.SampleSizes[Index]
+  else
+    raise EArgumentOutOfRangeException.Create('Argument is out of range');
+end;
+
+procedure TstszAtom.LoadKnownData(AStream: TStream);
+begin
+  LoadData(AStream); // load DataStream
+  FDataStream.Position := 0;
+  SampleSizeTable := TSampleSizeTable.Create(FDataStream);
 end;
 
 initialization
