@@ -1,4 +1,4 @@
-unit mp4SampleSizesTable;
+unit mp4SampleSizeTable;
 
 interface
 
@@ -17,7 +17,7 @@ type
 //  ..
 // 4 bytes   sample n-1 size
 
-  TChunkOffsetTable = record   // stsz Atom
+  TSampleSizeTable = record   // stsz Atom
     Version: Byte;
     Flags: array [0..2] of Byte;
     UniSize: UInt32;
@@ -29,14 +29,14 @@ type
 
 implementation
 
-{ TChunkOffsetTable }
+{ TSampleSizeTable }
 
-constructor TChunkOffsetTable.Create(AStream: TStream);
+constructor TSampleSizeTable.Create(AStream: TStream);
 begin
   LoadFromStream(AStream);
 end;
 
-procedure TChunkOffsetTable.LoadFromStream(AStream: TStream);
+procedure TSampleSizeTable.LoadFromStream(AStream: TStream);
 var
   i: Integer;
 begin
