@@ -161,7 +161,7 @@ begin
           for i := 0 to stcoAtom.ChunksCount - 1 do
           begin
             // check sample to chunk table entry
-            if (Cardinal(i) + 1 >= stscAtom.Entries[Sample2ChunkMapIndex].FirstChunk)
+            if (Cardinal(i) + 1 >= stscAtom.Entries[Sample2ChunkMapIndex + 1].FirstChunk) // TODO: Check stscAtom.EntriesCount first
               and (Sample2ChunkMapIndex < (stscAtom.EntriesCount - 1))
             then
               Inc(Sample2ChunkMapIndex);
