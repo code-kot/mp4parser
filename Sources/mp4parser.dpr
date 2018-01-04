@@ -7,7 +7,7 @@ uses
   Winapi.Windows,
   Vcl.Forms,
   mp4Atoms in 'Classes\mp4Atoms.pas',
-  Unit3 in 'Forms\Unit3.pas' {Form3},
+  Main in 'Forms\Main.pas' {MainForm},
   mp4Container in 'Classes\mp4Container.pas',
   mp4AtomFactory in 'Classes\mp4AtomFactory.pas',
   mp4StreamHelper in 'Classes\mp4StreamHelper.pas',
@@ -32,6 +32,7 @@ uses
 begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
-  Application.CreateForm(TForm3, Form3);
+  Application.Title := 'mp4parser';
+  Application.CreateForm(TMainForm, MainForm);
   Application.Run;
 end.

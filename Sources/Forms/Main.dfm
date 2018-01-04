@@ -1,7 +1,7 @@
-object Form3: TForm3
+object MainForm: TMainForm
   Left = 0
   Top = 0
-  Caption = 'Form3'
+  Caption = 'MainForm'
   ClientHeight = 511
   ClientWidth = 890
   Color = clBtnFace
@@ -61,8 +61,12 @@ object Form3: TForm3
       object mniFileOpen: TMenuItem
         Action = flpnFileOpen
       end
+      object mniFileClose: TMenuItem
+        Action = AFileClose
+      end
       object mniExit: TMenuItem
         Caption = 'Exit'
+        ShortCut = 32883
         OnClick = mniExitClick
       end
     end
@@ -99,6 +103,13 @@ object Form3: TForm3
       Category = 'Container'
       Caption = 'Export Atom Data'
       OnExecute = AExportAtomDataExecute
+    end
+    object AFileClose: TAction
+      Category = 'File'
+      Caption = 'Close'
+      ShortCut = 16471
+      OnExecute = AFileCloseExecute
+      OnUpdate = AFileCloseUpdate
     end
   end
   object pm1: TPopupMenu

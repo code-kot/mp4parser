@@ -106,8 +106,8 @@
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
         <DCCReference Include="Classes\mp4Atoms.pas"/>
-        <DCCReference Include="Forms\Unit3.pas">
-            <Form>Form3</Form>
+        <DCCReference Include="Forms\Main.pas">
+            <Form>MainForm</Form>
         </DCCReference>
         <DCCReference Include="Classes\mp4Container.pas"/>
         <DCCReference Include="Classes\mp4AtomFactory.pas"/>

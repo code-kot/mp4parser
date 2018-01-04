@@ -12,10 +12,12 @@ type
   private
     FFileStream: TFileStream;
     FAllAtoms: TObjectList<TCustomAtom>;
+    function GetFileLoaded: Boolean;
   public
     constructor Create;
     destructor Destroy; override;
 
+    property FileLoaded: Boolean read GetFileLoaded;
     property AllAtoms: TObjectList<TCustomAtom> read FAllAtoms;
 
     procedure Clear;
@@ -75,6 +77,11 @@ begin
   finally
     ExportFileStream.Free;
   end;
+end;
+
+function TMP4Container.GetFileLoaded: Boolean;
+begin
+  Result := Assigned(FFileStream);
 end;
 
 procedure TMP4Container.LoadAtomChild(Atom: TCustomAtom);

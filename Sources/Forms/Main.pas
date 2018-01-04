@@ -1,4 +1,4 @@
-unit Unit3;
+unit Main;
 
 interface
 
@@ -12,7 +12,7 @@ uses
   mp4Atoms, mp4Container;
 
 type
-  TForm3 = class(TForm)
+  TMainForm = class(TForm)
     mmo1: TMemo;
     tv1: TTreeView;
     spl1: TSplitter;
@@ -31,6 +31,8 @@ type
     AExportAtomData: TAction;
     mniExportAtomData: TMenuItem;
     mniExportAtom: TMenuItem;
+    AFileClose: TAction;
+    mniFileClose: TMenuItem;
     procedure mniExitClick(Sender: TObject);
     procedure flpnFileOpenAccept(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -40,6 +42,8 @@ type
     procedure ALoadChildAtomsExecute(Sender: TObject);
     procedure AExportAtomDataExecute(Sender: TObject);
     procedure AExportAtomExecute(Sender: TObject);
+    procedure AFileCloseUpdate(Sender: TObject);
+    procedure AFileCloseExecute(Sender: TObject);
   private
     { Private declarations }
     FTreeViewFS: TFormatSettings;
@@ -57,7 +61,7 @@ type
   end;
 
 var
-  Form3: TForm3;
+  MainForm: TMainForm;
 
 implementation
 
@@ -70,7 +74,7 @@ type
   TByteArray = array [0..0] of Byte;
   PByteArray = ^TByteArray;
 
-procedure TForm3.AddAtomInfo(tv: TTreeView; TVRoot: TTreeNode; Atom: TCustomAtom);
+procedure TMainForm.AddAtomInfo(tv: TTreeView; TVRoot: TTreeNode; Atom: TCustomAtom);
 var
   TVChild: TTreeNode;
 begin
@@ -81,7 +85,7 @@ begin
   AddAtomSubInfo(tv, TVChild, Atom);
 end;
 
-procedure TForm3.AddAtomSubInfo(tv: TTreeView; TVRoot: TTreeNode;
+procedure TMainForm.AddAtomSubInfo(tv: TTreeView; TVRoot: TTreeNode;
   Atom: TCustomAtom);
 var
   ChildAtom: TCustomAtom;
@@ -95,7 +99,7 @@ begin
     AddAtomInfo(tv, TVRoot, ChildAtom);
 end;
 
-procedure TForm3.AExportAtomDataExecute(Sender: TObject);
+procedure TMainForm.AExportAtomDataExecute(Sender: TObject);
 begin
   //TODO: Add some progress visualization
   with TSaveDialog.Create(Self) do
@@ -110,7 +114,7 @@ begin
   end;
 end;
 
-procedure TForm3.AExportAtomExecute(Sender: TObject);
+procedure TMainForm.AExportAtomExecute(Sender: TObject);
 begin
   //TODO: Add some progress visualization
   with TSaveDialog.Create(Self) do
@@ -125,7 +129,17 @@ begin
   end;
 end;
 
-procedure TForm3.ALoadAtomDataExecute(Sender: TObject);
+procedure TMainForm.AFileCloseExecute(Sender: TObject);
+begin
+  FMP4Container.Clear;
+end;
+
+procedure TMainForm.AFileCloseUpdate(Sender: TObject);
+begin
+  AFileClose.Enabled := FMP4Container.FileLoaded;
+end;
+
+procedure TMainForm.ALoadAtomDataExecute(Sender: TObject);
 var
   i: Integer;
 begin
@@ -145,7 +159,7 @@ begin
 //  UpdateUI;
 end;
 
-procedure TForm3.ALoadChildAtomsExecute(Sender: TObject);
+procedure TMainForm.ALoadChildAtomsExecute(Sender: TObject);
 var
   i: Integer;
 //  Atom: TCustomAtom;
@@ -170,36 +184,40 @@ begin
   end;
 end;
 
-procedure TForm3.flpnFileOpenAccept(Sender: TObject);
+procedure TMainForm.flpnFileOpenAccept(Sender: TObject);
 begin
   FMP4Container.Clear;
 
   FFileName := flpnFileOpen.Dialog.FileName;
-
   try
     FMP4Container.LoadFromFile(FFileName);
+    Caption := Format('%s - "%s"', [Application.Title, ExtractFileName(FFileName)]);
   except
     on E: Exception do
+    begin
       ApplicationShowException(E);
+      FMP4Container.Clear;
+    end;
   end;
 
   UpdateUI;
 end;
 
-procedure TForm3.FormCreate(Sender: TObject);
+procedure TMainForm.FormCreate(Sender: TObject);
 begin
+  Caption := Application.Title;
   mmo1.Clear;
   FMP4Container := TMP4Container.Create;
   FTreeViewFS := TFormatSettings.Create;
   FTreeViewFS.ThousandSeparator := ' ';
 end;
 
-procedure TForm3.FormDestroy(Sender: TObject);
+procedure TMainForm.FormDestroy(Sender: TObject);
 begin
   FMP4Container.Free;
 end;
 
-function TForm3.GetAtomPreviewHexStr(Atom: TCustomAtom): string;
+function TMainForm.GetAtomPreviewHexStr(Atom: TCustomAtom): string;
 var
   i: Integer;
   PreviewSize: Integer;
@@ -221,7 +239,7 @@ begin
   end;
 end;
 
-function TForm3.GetAtomPreviewStr(Atom: TCustomAtom): string;
+function TMainForm.GetAtomPreviewStr(Atom: TCustomAtom): string;
 var
   i: Integer;
   PreviewSize: Integer;
@@ -249,12 +267,12 @@ begin
   end;
 end;
 
-procedure TForm3.mniExitClick(Sender: TObject);
+procedure TMainForm.mniExitClick(Sender: TObject);
 begin
   Close;
 end;
 
-procedure TForm3.pm1Popup(Sender: TObject);
+procedure TMainForm.pm1Popup(Sender: TObject);
 begin
   ALoadAtomData.Enabled := (tv1.Items.Count > 0) and TVItemsWithObjectsSelected(tv1);
   ALoadChildAtoms.Enabled := (tv1.Items.Count > 0) and TVItemsWithChildObjectsSelected(tv1);
@@ -262,7 +280,7 @@ begin
   AExportAtom.Enabled := (tv1.SelectionCount = 1) and Assigned(tv1.Selected.Data);
 end;
 
-function TForm3.TVItemsWithChildObjectsSelected(tv: TTreeView): Boolean;
+function TMainForm.TVItemsWithChildObjectsSelected(tv: TTreeView): Boolean;
 var
   i: Integer;
 begin
@@ -277,7 +295,7 @@ begin
   Result := False;
 end;
 
-function TForm3.TVItemsWithObjectsSelected(tv: TTreeView): Boolean;
+function TMainForm.TVItemsWithObjectsSelected(tv: TTreeView): Boolean;
 var
   i: Integer;
 begin
@@ -288,7 +306,7 @@ begin
   Result := False;
 end;
 
-procedure TForm3.UpdateUI;
+procedure TMainForm.UpdateUI;
 var
   Atom: TCustomAtom;
   TVRoot: TTreeNode;
