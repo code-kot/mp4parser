@@ -137,6 +137,9 @@ end;
 procedure TMainForm.AFileCloseExecute(Sender: TObject);
 begin
   FMP4Container.Clear;
+  mmo1.Clear;
+  tv1.Items.Clear;
+  Caption := Application.Title;
 end;
 
 procedure TMainForm.AFileCloseUpdate(Sender: TObject);
