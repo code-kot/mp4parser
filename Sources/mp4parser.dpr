@@ -13,7 +13,9 @@ uses
   mp4StreamHelper in 'Classes\mp4StreamHelper.pas',
   mp4ChunkOffsetTable in 'Classes\mp4ChunkOffsetTable.pas',
   mp4Sample2ChunkMapTable in 'Classes\mp4Sample2ChunkMapTable.pas',
-  mp4SampleSizesTable in 'Classes\mp4SampleSizesTable.pas';
+  mp4SampleSizeTable in 'Classes\mp4SampleSizeTable.pas',
+  mp4HandlerTypeData in 'Classes\mp4HandlerTypeData.pas',
+  mp4SamplesOffsetMap in 'Classes\mp4SamplesOffsetMap.pas';
 
 {$R *.res}
 

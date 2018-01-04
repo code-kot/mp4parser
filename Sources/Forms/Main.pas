@@ -31,6 +31,9 @@ type
     AExportAtomData: TAction;
     mniExportAtomData: TMenuItem;
     mniExportAtom: TMenuItem;
+    mniTools1: TMenuItem;
+    AGenerateSamplesOffsetMap: TAction;
+    mniGenerateSamplesOffsetMap: TMenuItem;
     AFileClose: TAction;
     mniFileClose: TMenuItem;
     procedure mniExitClick(Sender: TObject);
@@ -42,6 +45,8 @@ type
     procedure ALoadChildAtomsExecute(Sender: TObject);
     procedure AExportAtomDataExecute(Sender: TObject);
     procedure AExportAtomExecute(Sender: TObject);
+    procedure AGenerateSamplesOffsetMapUpdate(Sender: TObject);
+    procedure AGenerateSamplesOffsetMapExecute(Sender: TObject);
     procedure AFileCloseUpdate(Sender: TObject);
     procedure AFileCloseExecute(Sender: TObject);
   private
@@ -137,6 +142,26 @@ end;
 procedure TMainForm.AFileCloseUpdate(Sender: TObject);
 begin
   AFileClose.Enabled := FMP4Container.FileLoaded;
+end;
+
+procedure TMainForm.AGenerateSamplesOffsetMapExecute(Sender: TObject);
+begin
+  //TODO: Add some progress visualization
+  with TSaveDialog.Create(Self) do
+  try
+    if Execute then
+    begin
+      FMP4Container.GenerateSamplesOffsetMap(FileName);
+      MessageDlg('Samples Offset Map generated.', mtInformation, [mbOK], 0);
+    end;
+  finally
+    Free;
+  end;
+end;
+
+procedure TMainForm.AGenerateSamplesOffsetMapUpdate(Sender: TObject);
+begin
+  AGenerateSamplesOffsetMap.Enabled := FMP4Container.FileLoaded;
 end;
 
 procedure TMainForm.ALoadAtomDataExecute(Sender: TObject);

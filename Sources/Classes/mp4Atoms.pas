@@ -172,9 +172,9 @@ type
   Tco64Atom = class(TstcoAtom)
   const
     ATOM_TYPE = 'co64';
-//  private
-//    function GetChunkOffset(Index: Integer): UInt64; override;
-//    function GetChunksCount: Integer; override;
+  private
+    function GetChunkOffset(Index: Uint32): UInt64; override;
+    function GetChunksCount: Uint32; override;
   public
     ChunkOffsetTable: TChunkOffsetTable64;
     procedure LoadKnownData(AStream: TStream); override;
@@ -591,6 +591,19 @@ begin
 end;
 
 { Tco64Atom }
+
+function Tco64Atom.GetChunkOffset(Index: Uint32): UInt64;
+begin
+  if (Index < ChunkOffsetTable.Count) then
+    Result := ChunkOffsetTable.ChunkOffset[Index]
+  else
+    raise EArgumentOutOfRangeException.Create('Argument is out of range');
+end;
+
+function Tco64Atom.GetChunksCount: Uint32;
+begin
+  Result := ChunkOffsetTable.Count;
+end;
 
 procedure Tco64Atom.LoadKnownData(AStream: TStream);
 begin

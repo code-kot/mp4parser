@@ -114,7 +114,9 @@
         <DCCReference Include="Classes\mp4StreamHelper.pas"/>
         <DCCReference Include="Classes\mp4ChunkOffsetTable.pas"/>
         <DCCReference Include="Classes\mp4Sample2ChunkMapTable.pas"/>
-        <DCCReference Include="Classes\mp4SampleSizesTable.pas"/>
+        <DCCReference Include="Classes\mp4SampleSizeTable.pas"/>
+        <DCCReference Include="Classes\mp4HandlerTypeData.pas"/>
+        <DCCReference Include="Classes\mp4SamplesOffsetMap.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

@@ -70,6 +70,12 @@ object MainForm: TMainForm
         OnClick = mniExitClick
       end
     end
+    object mniTools1: TMenuItem
+      Caption = 'Tools'
+      object mniGenerateSamplesOffsetMap: TMenuItem
+        Action = AGenerateSamplesOffsetMap
+      end
+    end
   end
   object actlst1: TActionList
     Left = 416
@@ -103,6 +109,11 @@ object MainForm: TMainForm
       Category = 'Container'
       Caption = 'Export Atom Data'
       OnExecute = AExportAtomDataExecute
+    end
+    object AGenerateSamplesOffsetMap: TAction
+      Caption = 'Generate Samples Offset Map'
+      OnExecute = AGenerateSamplesOffsetMapExecute
+      OnUpdate = AGenerateSamplesOffsetMapUpdate
     end
     object AFileClose: TAction
       Category = 'File'
